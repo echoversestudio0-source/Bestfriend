@@ -1,4 +1,3 @@
-
 name: Build BestFriend APK
 
 on:
@@ -22,16 +21,21 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract ZIP
+      - name: Extract Project
         run: |
           mkdir source
           unzip -q BestFriend-AndroidProject.zip -d source
 
-      - name: Locate Project
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Find Android Project
         run: |
-          PROJECT=$(find source -name gradlew -type f | head -n 1)
+          PROJECT=$(find source -name settings.gradle.kts -type f | head -n 1)
           if [ -z "$PROJECT" ]; then
-            echo "ERROR: gradlew not found in ZIP"
+            echo "Android project settings.gradle.kts not found"
             exit 1
           fi
           echo "PROJECT_DIR=$(dirname "$PROJECT")" >> $GITHUB_ENV
@@ -39,8 +43,7 @@ jobs:
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
